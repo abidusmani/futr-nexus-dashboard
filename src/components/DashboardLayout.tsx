@@ -1,11 +1,14 @@
 import { useState } from "react";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { DashboardSidebar } from "./DashboardSidebar";
+import { NestedSidebar } from "./NestedSidebar";
 import { TopNavigation } from "./TopNavigation";
 import { MainContent } from "./MainContent";
 
 export function DashboardLayout() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [activeMenu, setActiveMenu] = useState<string | null>(null);
+  const [activeSubmenu, setActiveSubmenu] = useState<string | null>(null);
 
   return (
     <SidebarProvider>
@@ -13,11 +16,20 @@ export function DashboardLayout() {
         <DashboardSidebar 
           collapsed={sidebarCollapsed}
           onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+          activeMenu={activeMenu}
+          onMenuClick={setActiveMenu}
+        />
+        
+        <NestedSidebar 
+          activeMenu={activeMenu}
+          activeSubmenu={activeSubmenu}
+          onSubmenuClick={setActiveSubmenu}
+          collapsed={sidebarCollapsed}
         />
         
         <div className="flex-1 flex flex-col">
           <TopNavigation />
-          <MainContent />
+          <MainContent activeSubmenu={activeSubmenu} />
         </div>
       </div>
     </SidebarProvider>

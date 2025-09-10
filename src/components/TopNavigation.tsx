@@ -64,7 +64,7 @@ export function TopNavigation() {
                 FA
               </AvatarFallback>
             </Avatar>
-            <span className="text-sm font-medium text-foreground">Futr Admin</span>
+            <span className="text-sm font-medium text-foreground">DS Energize Admin</span>
           </div>
         </div>
       </div>

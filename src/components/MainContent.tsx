@@ -12,6 +12,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
+interface MainContentProps {
+  activeSubmenu: string | null;
+}
+
 const sampleData = [
   {
     id: 1,
@@ -63,7 +67,7 @@ const sampleData = [
   }
 ];
 
-export function MainContent() {
+export function MainContent({ activeSubmenu }: MainContentProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [goToPage, setGoToPage] = useState("");
@@ -81,6 +85,43 @@ export function MainContent() {
     }
   };
 
+  // Show default state when no submenu is selected
+  if (!activeSubmenu) {
+    return (
+      <main className="flex-1 p-6 bg-background overflow-auto">
+        <div className="flex flex-col items-center justify-center h-full min-h-[400px] text-center">
+          <div className="mb-8">
+            <div className="w-48 h-48 mx-auto mb-6 relative">
+              <svg viewBox="0 0 200 200" className="w-full h-full">
+                {/* Illustration of person with magnifying glass */}
+                <circle cx="100" cy="70" r="25" fill="#3B82F6" />
+                <rect x="85" y="95" width="30" height="60" rx="15" fill="#3B82F6" />
+                <circle cx="140" cy="140" r="20" fill="none" stroke="#10B981" strokeWidth="3" />
+                <line x1="155" y1="155" x2="170" y2="170" stroke="#10B981" strokeWidth="3" strokeLinecap="round" />
+              </svg>
+            </div>
+          </div>
+          
+          <h2 className="text-2xl font-bold text-foreground mb-2">No plant selected.</h2>
+          <p className="text-muted-foreground">Please select a Plant from above dropdown.</p>
+        </div>
+      </main>
+    );
+  }
+
+  // Show submenu-specific content for non-Home items
+  if (activeSubmenu !== "Home") {
+    return (
+      <main className="flex-1 p-6 bg-background overflow-auto">
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-foreground">{activeSubmenu}</h1>
+          <p className="text-muted-foreground">Content for {activeSubmenu} goes here.</p>
+        </div>
+      </main>
+    );
+  }
+
+  // Show home content (table) for Home or default route
   return (
     <main className="flex-1 p-6 space-y-6">
       {/* Search Bar */}
