@@ -7,6 +7,7 @@ import { MainContent } from "./MainContent";
 
 export function DashboardLayout() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [nestedCollapsed, setNestedCollapsed] = useState(false);
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [activeSubmenu, setActiveSubmenu] = useState<string | null>(null);
 
@@ -25,6 +26,8 @@ export function DashboardLayout() {
           activeSubmenu={activeSubmenu}
           onSubmenuClick={setActiveSubmenu}
           collapsed={sidebarCollapsed}
+          nestedCollapsed={nestedCollapsed}
+          onNestedToggle={() => setNestedCollapsed(!nestedCollapsed)}
         />
         
         <div className="flex-1 flex flex-col">
