@@ -31,7 +31,13 @@ import {
   Cog,
   FileCheck,
   HardDrive,
-  Cloud
+  Cloud,
+  TrendingUp,
+  Plus,
+  AlertTriangle,
+  CheckCircle,
+  FileBarChart,
+  ClipboardList
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -133,6 +139,37 @@ const submenuItems = {
     { title: "Import Plant Budgeted", icon: BarChart3 },
     { title: "Import Inverter Pvsyst", icon: ZapIcon },
     { title: "Shadow Map", icon: Map },
+  ],
+  "Models": [
+    { title: "Add Model Device", icon: Plus },
+    { title: "Model Device List", icon: FileText },
+  ],
+  "Forecasting": [
+    { title: "Substation Analysis", icon: TrendingUp },
+    { title: "Load Forecasting", icon: BarChart3 },
+    { title: "Generation Forecasting", icon: Activity },
+    { title: "Weather Integration", icon: Cloud },
+  ],
+  "Performance Monitoring": [
+    { title: "Futr Console", icon: Gauge },
+    { title: "Inverter Fault Analysis", icon: AlertTriangle },
+    { title: "SMB Fault Analysis", icon: FileCheck },
+    { title: "Strings Fault Analysis", icon: Activity },
+    { title: "Plant Losses Analysis", icon: BarChart3 },
+    { title: "Scada Alerts Util", icon: AlertTriangle },
+    { title: "Inverters String Fault Jobs", icon: Wrench },
+    { title: "Inverters MPPT Fault Jobs", icon: Settings },
+    { title: "Inverter SCB Channel Fault Jobs", icon: Cog },
+    { title: "SMB Strings Fault Jobs", icon: Activity },
+  ],
+  "Maintenance": [
+    { title: "Work Orders", icon: ClipboardList },
+    { title: "Work Order Templates", icon: FileText },
+    { title: "CMMS Checklist Templates", icon: CheckCircle },
+    { title: "Work Order Reports", icon: FileBarChart },
+  ],
+  "Warranty Management": [
+    { title: "Claim Form", icon: FileText },
   ]
 };
 
