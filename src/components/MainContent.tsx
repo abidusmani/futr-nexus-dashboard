@@ -85,34 +85,108 @@ export function MainContent({ activeSubmenu }: MainContentProps) {
     }
   };
 
-  // Show default state when no submenu is selected
-  if (!activeSubmenu) {
+  // ✅ New Logic: Explicitly handle the "Home" case first.
+  if (activeSubmenu === "Home") {
     return (
-      <main className="flex-1 p-6 bg-background overflow-auto">
-        <div className="flex flex-col items-center justify-center h-full min-h-[400px] text-center">
-          <div className="mb-8">
-            <div className="w-48 h-48 mx-auto mb-6 relative">
-              <svg viewBox="0 0 200 200" className="w-full h-full">
-                {/* Illustration of person with magnifying glass */}
-                <circle cx="100" cy="70" r="25" fill="#3B82F6" />
-                <rect x="85" y="95" width="30" height="60" rx="15" fill="#3B82F6" />
-                <circle cx="140" cy="140" r="20" fill="none" stroke="#10B981" strokeWidth="3" />
-                <line x1="155" y1="155" x2="170" y2="170" stroke="#10B981" strokeWidth="3" strokeLinecap="round" />
-              </svg>
-            </div>
+      <main className="flex-1 p-6 space-y-6 bg-white">
+        {/* Search Bar */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            placeholder="Search plants…"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10 max-w-md"
+          />
+        </div>
+
+        {/* Data Table */}
+        <Card>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-muted/50">
+                  <TableHead className="font-semibold">Plant Name</TableHead>
+                  <TableHead className="font-semibold">Client</TableHead>
+                  <TableHead className="font-semibold">DC Capacity</TableHead>
+                  <TableHead className="font-semibold">Module</TableHead>
+                  <TableHead className="font-semibold">Mount Type</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredData.map((item) => (
+                  <TableRow 
+                    key={item.id}
+                    className="hover:bg-muted/50 transition-colors"
+                  >
+                    <TableCell>
+                      <button className="text-primary font-medium hover:underline text-left">
+                        {item.plantName}
+                      </button>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {item.client}
+                    </TableCell>
+                    <TableCell className="font-medium">
+                      {item.dcCapacity}
+                    </TableCell>
+                    <TableCell>
+                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-secondary text-secondary-foreground">
+                        {item.module}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                        item.mountType === "Ground Mounted" 
+                          ? "bg-accent/10 text-accent" 
+                          : "bg-info/10 text-info"
+                      }`}>
+                        {item.mountType}
+                      </span>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+
+        {/* Pagination */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <Button variant="outline" size="sm" disabled={currentPage === 1}>
+              <ChevronLeft className="w-4 h-4" />
+            </Button>
+            <span className="text-sm text-muted-foreground">
+              Page {currentPage} of 1
+            </span>
+            <Button variant="outline" size="sm" disabled={currentPage === 1}>
+              <ChevronRight className="w-4 h-4" />
+            </Button>
           </div>
-          
-          <h2 className="text-2xl font-bold text-foreground mb-2">No plant selected.</h2>
-          <p className="text-muted-foreground">Please select a Plant from above dropdown.</p>
+
+          <div className="flex items-center space-x-2">
+            <span className="text-sm text-muted-foreground">Go to page:</span>
+            <Input
+              type="number"
+              placeholder="1"
+              value={goToPage}
+              onChange={(e) => setGoToPage(e.target.value)}
+              className="w-16 h-8"
+            />
+            <Button size="sm" onClick={handleGoToPage}>
+              Go
+            </Button>
+          </div>
         </div>
       </main>
     );
   }
 
-  // Show submenu-specific content for non-Home items
-  if (activeSubmenu !== "Home") {
+  // ✅ New Logic: Show generic content for any other active submenu
+  if (activeSubmenu) {
     return (
-      <main className="flex-1 p-6 bg-background overflow-auto">
+      <main className="flex-1 p-6 bg-white overflow-auto">
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-foreground">{activeSubmenu}</h1>
           <p className="text-muted-foreground">Content for {activeSubmenu} goes here.</p>
@@ -121,98 +195,23 @@ export function MainContent({ activeSubmenu }: MainContentProps) {
     );
   }
 
-  // Show home content (table) for Home or default route
+  // ✅ New Logic: Show the default 'no selection' message
   return (
-    <main className="flex-1 p-6 space-y-6">
-      {/* Search Bar */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <Input
-          placeholder="Search plants…"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10 max-w-md"
-        />
-      </div>
-
-      {/* Data Table */}
-      <Card>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-muted/50">
-                <TableHead className="font-semibold">Plant Name</TableHead>
-                <TableHead className="font-semibold">Client</TableHead>
-                <TableHead className="font-semibold">DC Capacity</TableHead>
-                <TableHead className="font-semibold">Module</TableHead>
-                <TableHead className="font-semibold">Mount Type</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredData.map((item, index) => (
-                <TableRow 
-                  key={item.id}
-                  className="hover:bg-muted/50 transition-colors"
-                >
-                  <TableCell>
-                    <button className="text-primary font-medium hover:underline text-left">
-                      {item.plantName}
-                    </button>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {item.client}
-                  </TableCell>
-                  <TableCell className="font-medium">
-                    {item.dcCapacity}
-                  </TableCell>
-                  <TableCell>
-                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-secondary text-secondary-foreground">
-                      {item.module}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                      item.mountType === "Ground Mounted" 
-                        ? "bg-accent/10 text-accent" 
-                        : "bg-info/10 text-info"
-                    }`}>
-                      {item.mountType}
-                    </span>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-
-      {/* Pagination */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-2">
-          <Button variant="outline" size="sm" disabled={currentPage === 1}>
-            <ChevronLeft className="w-4 h-4" />
-          </Button>
-          <span className="text-sm text-muted-foreground">
-            Page {currentPage} of 1
-          </span>
-          <Button variant="outline" size="sm" disabled={currentPage === 1}>
-            <ChevronRight className="w-4 h-4" />
-          </Button>
+    <main className="flex-1 p-6 bg-white overflow-auto">
+      <div className="flex flex-col items-center justify-center h-full min-h-[400px] text-center">
+        <div className="mb-8">
+          <div className="w-48 h-48 mx-auto mb-6 relative">
+            <svg viewBox="0 0 200 200" className="w-full h-full">
+              {/* Illustration of person with magnifying glass */}
+              <circle cx="100" cy="70" r="25" fill="#3B82F6" />
+              <rect x="85" y="95" width="30" height="60" rx="15" fill="#3B82F6" />
+              <circle cx="140" cy="140" r="20" fill="none" stroke="#10B981" strokeWidth="3" />
+              <line x1="155" y1="155" x2="170" y2="170" stroke="#10B981" strokeWidth="3" strokeLinecap="round" />
+            </svg>
+          </div>
         </div>
-
-        <div className="flex items-center space-x-2">
-          <span className="text-sm text-muted-foreground">Go to page:</span>
-          <Input
-            type="number"
-            placeholder="1"
-            value={goToPage}
-            onChange={(e) => setGoToPage(e.target.value)}
-            className="w-16 h-8"
-          />
-          <Button size="sm" onClick={handleGoToPage}>
-            Go
-          </Button>
-        </div>
+        <h2 className="text-2xl font-bold text-foreground mb-2">No plant selected.</h2>
+        <p className="text-muted-foreground">Please select a Plant from above dropdown.</p>
       </div>
     </main>
   );

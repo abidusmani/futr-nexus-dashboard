@@ -1,7 +1,8 @@
 import { DashboardLayout } from "@/components/DashboardLayout";
+import LogIn from "./LogIn";
 
 const Index = () => {
-  return <DashboardLayout />;
+  return <LogIn/>;
 };
 
 export default Index;

@@ -30,12 +30,12 @@ interface DashboardSidebarProps {
 }
 
 const navigationItems = [
-  { title: "Home", url: "/", icon: Home, hasSubmenu: false },
+  { title: "Home", url: "/HomePage", icon: Home, hasSubmenu: false },
   { title: "Digitization", url: "/digitization", icon: Zap, hasSubmenu: true },
   { title: "Digital Twin", url: "/digital-twin", icon: Cpu, hasSubmenu: true },
   { title: "Serial No Scanning", url: "/serial-no-scanning", icon: Radio, hasSubmenu: true },
   { title: "Library", url: "/library", icon: Library, hasSubmenu: true },
-  { title: "Scada Settings", url: "/scada-settings", icon: Settings, hasSubmenu: true },
+  { title: "RMS Settings", url: "/RMS-settings", icon: Settings, hasSubmenu: true },
   { title: "Forecasting", url: "/forecasting", icon: TrendingUp, hasSubmenu: true },
   { title: "Models", url: "/models", icon: Cpu, hasSubmenu: true },
   { title: "Performance Monitoring", url: "/performance", icon: Activity, hasSubmenu: true },
@@ -43,7 +43,7 @@ const navigationItems = [
   { title: "Management", url: "/management", icon: Users, hasSubmenu: true },
   { title: "Warranty Management", url: "/warranty", icon: Shield, hasSubmenu: true },
   { title: "Platform Options", url: "/platform", icon: Sliders, hasSubmenu: true },
-  { title: "Futr Logger", url: "/futr-logger", icon: HardDrive, hasSubmenu: true },
+  { title: "DSEnergize Logger", url: "/futr-logger", icon: HardDrive, hasSubmenu: true },
   { title: "Data Points", url: "/data-points", icon: Database, hasSubmenu: true },
   { title: "Equipment Audit", url: "/audit", icon: ClipboardCheck, hasSubmenu: true },
 ];
