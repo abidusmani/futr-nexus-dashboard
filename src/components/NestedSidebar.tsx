@@ -41,6 +41,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+// import Link from 'next/link';
+import { NavLink } from "react-router-dom";
 
 interface NestedSidebarProps {
   activeMenu: string | null;
@@ -112,12 +114,12 @@ const submenuItems = {
     { title: "Tech DD Complied Report", icon: FileCheck },
   ],
   "Management": [
-    { title: "User Management", icon: Users },
-    { title: "File Manager", icon: FolderOpen },
-    { title: "Team Management", icon: UserCog },
-    { title: "Roles Management", icon: Shield },
-    { title: "Warranty Management", icon: FileCheck },
-    { title: "Insurance Management", icon: DollarSign },
+    { title: "User Management", icon: Users, url: "/management/user-management" },
+    { title: "File Manager", icon: FolderOpen, url: "/management/file-manager" },
+    { title: "Team Management", icon: UserCog, url: "/management/team-management" },
+    { title: "Roles Management", icon: Shield, url: "/management/roles-management" },
+    { title: "Warranty Management", icon: FileCheck, url: "/management/warranty-management" },
+    { title: "Insurance Management", icon: DollarSign, url: "/management/insurance-management" },
   ],
   "Platform Options": [
     { title: "Business Unit", icon: Building2 },
@@ -196,7 +198,7 @@ export function NestedSidebar({
       {shouldShow && (
         <>
           {/* Header */}
-          <div className="p-4 border-b border-border flex items-center justify-between">
+          <div className="p-5 border-b border-border flex items-center justify-between">
             {!nestedCollapsed && (
               <h3 className="text-sm font-semibold text-foreground">{activeMenu}</h3>
             )}
@@ -216,26 +218,49 @@ export function NestedSidebar({
 
           {/* Navigation */}
           <nav className="flex-1 p-4 space-y-1">
-            {items.map((item) => (
-              <button
-                key={item.title}
-                onClick={() => onSubmenuClick(activeSubmenu === item.title ? null : item.title)}
-                className={cn(
-                  "flex items-center w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors",
-                  "hover:bg-secondary hover:text-secondary-foreground",
-                  activeSubmenu === item.title 
-                    ? "bg-primary text-primary-foreground" 
-                    : "text-muted-foreground",
-                  nestedCollapsed ? "justify-center" : ""
-                )}
-                title={nestedCollapsed ? item.title : undefined}
-              >
-                <item.icon className="w-4 h-4 flex-shrink-0" />
-                {!nestedCollapsed && (
-                  <span className="ml-3 truncate">{item.title}</span>
-                )}
-              </button>
-            ))}
+            {items.map((item) => {
+              // Define the shared class names and click handler for consistency
+              const itemClasses = cn(
+                "flex items-center w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                "hover:bg-secondary hover:text-secondary-foreground",
+                activeSubmenu === item.title 
+                  ? "bg-primary text-primary-foreground" 
+                  : "text-muted-foreground",
+                nestedCollapsed ? "justify-center" : ""
+              );
+
+              const handleClick = () => onSubmenuClick(item.title);
+
+              return (
+                // ✅ Conditionally render a NavLink or a Button
+                item.url ? (
+                  <NavLink
+                    key={item.title}
+                    to={item.url}
+                    onClick={handleClick}
+                    className={itemClasses} // Use the same classes for a consistent look
+                    title={nestedCollapsed ? item.title : undefined}
+                  >
+                    <item.icon className="w-4 h-4 flex-shrink-0" />
+                    {!nestedCollapsed && (
+                      <span className="ml-3 truncate">{item.title}</span>
+                    )}
+                  </NavLink>
+                ) : (
+                  <button
+                    key={item.title}
+                    onClick={handleClick}
+                    className={itemClasses} // Use the same classes
+                    title={nestedCollapsed ? item.title : undefined}
+                  >
+                    <item.icon className="w-4 h-4 flex-shrink-0" />
+                    {!nestedCollapsed && (
+                      <span className="ml-3 truncate">{item.title}</span>
+                    )}
+                  </button>
+                )
+              );
+            })}
           </nav>
         </>
       )}

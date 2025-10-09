@@ -11,6 +11,10 @@ import { MainContent } from "./components/MainContent";
 import HomePage from "./pages/Home";
 import { DashboardLayout } from "./components/DashboardLayout"; // <-- Make sure to import this
 import LogIn from "./pages/LogIn";
+import RolesManagement from "./pages/RoleManagement";
+import AddRole from "./pages/AddRole";
+import UserManagement from "./pages/UserManagement";
+import AddMemberPage from "./pages/AddMember";
 
 const App = () => (
   <BrowserRouter>
@@ -28,6 +32,11 @@ const App = () => (
         <Route path="plant-registration" element={<PlantRegister />} />
         <Route path="digitization" element={<Digitization />} />
         <Route path="library" element={<Library />} />
+        <Route path="/management/roles-management" element={<RolesManagement/>} />
+          <Route path="/management/user-management" element={<UserManagement/>} />
+        <Route path="/management/roles-management/add" element={<AddRole/>} />
+        <Route path="/management/user-management/add" element={<AddMemberPage/>} />
+
       </Route>
       {/* Any other routes that do not need the dashboard layout go here */}
       <Route path="*" element={<NotFound />} />

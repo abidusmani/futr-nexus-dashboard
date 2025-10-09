@@ -12,7 +12,7 @@ const LogIn = () => {
   );
   const navigate = useNavigate();
 
-  const handleSubmit = async (event: React.FormEvent) => {
+ const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setIsLoading(true);
     setMessage(null);
@@ -25,12 +25,18 @@ const LogIn = () => {
         },
         body: JSON.stringify({ identifier, password }),
       });
-
+console.log("login work");
       const data = await response.json();
 
       if (data.success) {
         setMessage({ type: "success", text: data.message });
-        localStorage.setItem("token", data.user.token);
+
+        // ✅ THE FIX: Access the token directly from the response data
+        localStorage.setItem("token", data.token);
+
+        // (Recommended) Also save the user details if you need them elsewhere
+        localStorage.setItem("user", JSON.stringify(data.data));
+
         navigate("/Dashboard");
       } else {
         setMessage({ type: "error", text: data.message });

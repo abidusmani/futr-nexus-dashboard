@@ -57,7 +57,7 @@ export function DashboardSidebar({ collapsed, onToggleCollapse, activeMenu, onMe
       {/* Logo */}
       <div className="p-6 border-b border-border">
         <div className="flex items-center">
-          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+          <div className="w-8 h-7 bg-primary rounded-lg flex items-center justify-center">
             <Zap className="w-5 h-5 text-primary-foreground" />
           </div>
           {!collapsed && (
@@ -131,7 +131,7 @@ export function DashboardSidebar({ collapsed, onToggleCollapse, activeMenu, onMe
             <ChevronRight className="w-4 h-4" />
           ) : (
             <>
-              <ChevronLeft className="w-4 h-4" />
+              <ChevronLeft className="w-5 h-4" />
               <span className="ml-2">Collapse</span>
             </>
           )}
