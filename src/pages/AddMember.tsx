@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ArrowLeft } from 'lucide-react';
-import { Plant } from '@/layouts/DashboardLayout';
+import { Plant } from '@/components/DashboardLayout';
 
 // --- Type Definitions ---
 interface Role {
@@ -142,6 +142,9 @@ export default function AddMemberPage() {
           </div>
           
           {/* Custom Role Selection List */}
+          <div className="bg-blue-100 text-blue-800 p-4 rounded-lg text-sm mb-6">
+          Please select role from below table.
+        </div>
           <div>
             <Label className="block text-sm font-medium text-gray-700 mb-2">Role*</Label>
             <div className="bg-white rounded-lg border">

@@ -1,7 +1,17 @@
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from 'react-router-dom';
 import { 
-  Bell, Plus, Sun, Moon, Map, User, LogOut, Package, Users 
+  Bell, 
+  Plus, 
+  Sun, 
+  Moon, 
+  Map, 
+  User, 
+  LogOut, 
+  Package, 
+  Users, 
+  ChevronsUpDown, 
+  Check 
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -13,13 +23,16 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
-// ✅ FIX 1: Update the Plant interface to match your API response
-interface Plant {
-  plantId: string;
-  plantName: string;
-  // You can add other properties like dcCapacity if needed
-}
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+} from "@/components/ui/command";
+import { cn } from "@/lib/utils";
+import { Plant } from '@/components/DashboardLayout'; // Adjust path if needed
 
 interface TopNavigationProps {
   activeMenu: string | null;
@@ -31,50 +44,42 @@ export function TopNavigation({ activeMenu, selectedPlant, onSelectPlant }: TopN
   const navigate = useNavigate();
   const location = useLocation();
   
+  // State for UI controls
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [showMap, setShowMap] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<Plant[]>([]);
+
+  // State for the Combobox
+  const [allPlants, setAllPlants] = useState<Plant[]>([]);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [isLoadingSearch, setIsLoadingSearch] = useState(false);
+  const [isLoadingPlants, setIsLoadingPlants] = useState(false);
 
+  // Fetch all plants when the 'Management' menu is active
   useEffect(() => {
-    // Use 'plantName' for the display value
-    setSearchQuery(selectedPlant?.plantName || "");
-  }, [selectedPlant]);
+    if (activeMenu === 'Management') {
+      const fetchAllPlants = async () => {
+        const token = localStorage.getItem('token');
+        if (!token) return;
 
-  useEffect(() => {
-    if (!searchQuery || (selectedPlant && searchQuery === selectedPlant.plantName)) {
-      setSearchResults([]);
-      return;
+        setIsLoadingPlants(true);
+        try {
+          const response = await fetch(`http://localhost:3000/api/plants`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          if (response.ok) {
+            const data = await response.json();
+            setAllPlants(data.data || []);
+          }
+        } catch (error) {
+          console.error("Failed to fetch all plants:", error);
+        } finally {
+          setIsLoadingPlants(false);
+        }
+      };
+      fetchAllPlants();
     }
+  }, [activeMenu]);
 
-    const timerId = setTimeout(() => {
-      const token = localStorage.getItem('token');
-      if (!token) return;
-
-      setIsLoadingSearch(true);
-      fetch(`http://localhost:3000/api/plants?search=${searchQuery}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      })
-      .then(res => res.ok ? res.json() : Promise.reject(res))
-      .then(data => {
-        // The API returns the array inside a 'data' property
-        const plantsArray = data.data;
-        setSearchResults(plantsArray || []);
-      })
-      .catch(console.error)
-      .finally(() => setIsLoadingSearch(false));
-    }, 500);
-
-    return () => clearTimeout(timerId);
-  }, [searchQuery, selectedPlant]);
-
-  const handlePlantSelect = (plant: Plant) => {
-    onSelectPlant(plant);
-    setIsDropdownOpen(false);
-  };
-
+  // Effect to toggle dark mode
   useEffect(() => {
     document.documentElement.classList.toggle('dark', isDarkMode);
   }, [isDarkMode]);
@@ -82,51 +87,59 @@ export function TopNavigation({ activeMenu, selectedPlant, onSelectPlant }: TopN
   return (
     <header className="bg-card border-b border-border px-6 py-5">
       <div className="flex items-center justify-between">
-        {/* Left side */}
+        {/* Left side - Conditional UI */}
         <div className="flex items-center space-x-4">
           {activeMenu === 'Management' ? (
-            <div className="relative">
-              <input 
-                type="text"
-                placeholder="Search Solar Plant"
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  if (selectedPlant) onSelectPlant(null);
-                  setIsDropdownOpen(true);
-                }}
-                onBlur={() => setTimeout(() => setIsDropdownOpen(false), 200)}
-                onFocus={() => { if (searchQuery) setIsDropdownOpen(true); }}
-                className="bg-input border border-border rounded-md px-3 py-2 text-sm w-48"
-              />
-              
-              {isDropdownOpen && (isLoadingSearch || searchResults.length > 0) && (
-                <div className="absolute top-full mt-2 w-full bg-card border border-border rounded-md shadow-lg z-10">
-                  {isLoadingSearch ? (
-                     <div className="p-2 text-sm text-muted-foreground">Searching...</div>
-                  ) : (
-                    searchResults.map(plant => (
-                      <div 
-                        // ✅ FIX 2: Use 'plantId' for the unique key
-                        key={plant.plantId} 
-                        onMouseDown={() => handlePlantSelect(plant)}
-                        className="p-2 text-sm hover:bg-secondary cursor-pointer"
+            <Popover open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={isDropdownOpen}
+                  className="w-[200px] justify-between"
+                >
+                  {selectedPlant
+                    ? allPlants.find((plant) => plant.plantId === selectedPlant.plantId)?.plantName
+                    : "Select plant..."}
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[200px] p-0">
+                <Command>
+                  <CommandInput placeholder="Search plant..." />
+                  <CommandEmpty>
+                    {isLoadingPlants ? "Loading plants..." : "No plant found."}
+                  </CommandEmpty>
+                  <CommandGroup>
+                    {allPlants.map((plant) => (
+                      <CommandItem
+                        key={plant.plantId}
+                        value={plant.plantName}
+                        onSelect={() => {
+                          onSelectPlant(plant.plantId === selectedPlant?.plantId ? null : plant);
+                          setIsDropdownOpen(false);
+                        }}
                       >
-                        {/* ✅ FIX 3: Use 'plantName' to display the name */}
+                        <Check
+                          className={cn(
+                            "mr-2 h-4 w-4",
+                            selectedPlant?.plantId === plant.plantId ? "opacity-100" : "opacity-0"
+                          )}
+                        />
                         {plant.plantName}
-                      </div>
-                    ))
-                  )}
-                </div>
-              )}
-            </div>
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </Command>
+              </PopoverContent>
+            </Popover>
           ) : (
             <h1 className="text-lg font-semibold text-foreground">{activeMenu || 'Dashboard'}</h1>
           )}
         </div>
 
-        {/* Right side */}
-         <div className="flex items-center space-x-4">
+        {/* Right side - Controls */}
+        <div className="flex items-center space-x-4">
           <Button variant="ghost" size="sm" onClick={() => setIsDarkMode(!isDarkMode)} className="p-2">
             {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </Button>
@@ -162,7 +175,7 @@ export function TopNavigation({ activeMenu, selectedPlant, onSelectPlant }: TopN
                 <DropdownMenuItem onClick={() => navigate('/profile')}><User className="mr-2 h-4 w-4" /><span>Profile</span></DropdownMenuItem>
                 <DropdownMenuItem onClick={() => {
                     localStorage.removeItem('token');
-                    navigate('/login');
+                    navigate('/');
                 }}><LogOut className="mr-2 h-4 w-4" /><span>Logout</span></DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
