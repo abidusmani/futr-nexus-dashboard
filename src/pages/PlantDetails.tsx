@@ -66,7 +66,7 @@ const PlantDetails = ({ selectedPlant, onBackClick, onUpdate }) => {
                 throw new Error('No authentication token found. Please log in.');
             }
 
-            const response = await fetch(`http://localhost:3000/api/plants?plantId=${selectedPlant.plantId}`, {
+            const response = await fetch(`https://os.dsenergize.com/api/plants?plantId=${selectedPlant.plantId}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',

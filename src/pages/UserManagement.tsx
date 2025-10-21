@@ -63,7 +63,7 @@ export default function UserManagementPage() {
         const token = localStorage.getItem('token');
         if (!token) throw new Error("Authentication token not found.");
 
-        const apiUrl = `http://localhost:3000/api/detaileRole?plantId=${selectedPlant.plantId}`;
+        const apiUrl = `https://os.dsenergize.com/api/detaileRole?plantId=${selectedPlant.plantId}`;
 
         const response = await fetch(apiUrl, {
           headers: {

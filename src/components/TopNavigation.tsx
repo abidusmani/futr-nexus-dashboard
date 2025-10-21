@@ -62,7 +62,7 @@ export function TopNavigation({ activeMenu, selectedPlant, onSelectPlant }: TopN
 
         setIsLoadingPlants(true);
         try {
-          const response = await fetch(`http://localhost:3000/api/plants`, {
+          const response = await fetch(`https://os.dsenergize.com/api/plants`, {
             headers: { 'Authorization': `Bearer ${token}` }
           });
           if (response.ok) {

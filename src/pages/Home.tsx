@@ -30,7 +30,7 @@ const HomePage = () => {
           throw new Error("No authentication token found. Please log in.");
         }
 
-        const url = `http://localhost:3000/api/plants?search=${encodeURIComponent(
+        const url = `https://os.dsenergize.com/api/plants?search=${encodeURIComponent(
           searchTerm
         )}&page=${currentPage}&limit=${rowsPerPage}`;
 

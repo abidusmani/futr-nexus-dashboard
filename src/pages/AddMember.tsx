@@ -43,7 +43,7 @@ export default function AddMemberPage() {
       if (!token) return;
 
       try {
-        const response = await fetch(`http://localhost:3000/api/users/roles/getRolePlId?plantId=${selectedPlant.plantId}`, {
+        const response = await fetch(`https://os.dsenergize.com/api/users/roles/getRolePlId?plantId=${selectedPlant.plantId}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (response.ok) {
@@ -78,7 +78,7 @@ export default function AddMemberPage() {
         plantId: selectedPlant.plantId,
       };
 
-      const response = await fetch('http://localhost:3000/api/addMember', {
+      const response = await fetch('https://os.dsenergize.com/api/addMember', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

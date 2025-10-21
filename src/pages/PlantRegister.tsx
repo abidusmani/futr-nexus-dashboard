@@ -52,7 +52,7 @@ const PlantRegister = () => {
       return;
     }
     try {
-      const response = await fetch(`http://localhost:3000/api/search/userSearch?q=${encodeURIComponent(query)}`);
+      const response = await fetch(`https://os.dsenergize.com/api/search/userSearch?q=${encodeURIComponent(query)}`);
       if (!response.ok) {
         throw new Error('User search failed');
       }
@@ -117,7 +117,7 @@ const PlantRegister = () => {
     }
 
     try {
-      const response = await fetch("http://localhost:3000/api/plants/plantRegistration", {
+      const response = await fetch("https://os.dsenergize.com/api/plants/plantRegistration", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -52,7 +52,7 @@ export default function AddRolePage() {
         const token = localStorage.getItem('token');
         if (!token) throw new Error("Authentication token not found.");
 
-        const response = await fetch('http://localhost:3000/api/users/roles/getAllpermission', {
+        const response = await fetch('https://os.dsenergize.com/api/users/roles/getAllpermission', {
           headers: { 'Authorization': `Bearer ${token}` },
         });
 
@@ -106,7 +106,7 @@ export default function AddRolePage() {
       };
 
       // Ensure this is your correct endpoint for creating a role
-      const response = await fetch('http://localhost:3000/api/users/createRole', {
+      const response = await fetch('https://os.dsenergize.com/api/users/createRole', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
