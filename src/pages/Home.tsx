@@ -234,7 +234,9 @@ const HomePage = () => {
                           className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600 cursor-pointer"
                           onClick={() => handlePlantClick(item)}
                         >
-                          {item.plantName}
+                          {item.plantName 
+  ? item.plantName.charAt(0).toUpperCase() + item.plantName.slice(1) 
+  : ''}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {item.projectType}

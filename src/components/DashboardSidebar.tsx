@@ -37,7 +37,7 @@ const navigationItems = [
   { title: "Library", url: "/library", icon: Library, hasSubmenu: true },
   { title: "RMS Settings", url: "/RMS-settings", icon: Settings, hasSubmenu: true },
   { title: "Forecasting", url: "/forecasting", icon: TrendingUp, hasSubmenu: true },
-  { title: "Models", url: "/models", icon: Cpu, hasSubmenu: true },
+  { title: "Mapping", url: "/models", icon: Cpu, hasSubmenu: true },
   { title: "Performance Monitoring", url: "/performance", icon: Activity, hasSubmenu: true },
   { title: "Maintenance", url: "/maintenance", icon: Wrench, hasSubmenu: true },
   { title: "Management", url: "/management", icon: Users, hasSubmenu: true },

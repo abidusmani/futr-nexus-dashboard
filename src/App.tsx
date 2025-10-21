@@ -15,6 +15,7 @@ import RolesManagement from "./pages/RoleManagement";
 import AddRole from "./pages/AddRole";
 import UserManagement from "./pages/UserManagement";
 import AddMemberPage from "./pages/AddMember";
+import DeviceMapping from "./pages/DeviceMapping";
 import ProtectedRoute from "./components/ProtechtedRoute";
 
 const App = () => (
@@ -31,6 +32,8 @@ const App = () => (
         {" "}
         {/*yeha se dashboard layout ke andar chije hone wali h*/}
         {/* Your registration pages now render inside the DashboardLayout */}
+        <Route path="/Dashboard" element={<DashboardLayout />} />{" "}
+        <Route path="/DeviceMapping" element={<DeviceMapping />} />
         <Route path="HomePage" element={<HomePage />} />
         <Route path="client-registration" element={<ClientRegister />} />
         <Route path="plant-registration" element={<PlantRegister />} />

@@ -142,8 +142,8 @@ const submenuItems = {
     { title: "Import Inverter Pvsyst", icon: ZapIcon },
     { title: "Shadow Map", icon: Map },
   ],
-  "Models": [
-    { title: "Add Model Device", icon: Plus },
+  "Mapping": [
+    { title: "Device Mapping", icon:FileText , url: "/DeviceMapping" },
     { title: "Model Device List", icon: FileText },
   ],
   "Forecasting": [
