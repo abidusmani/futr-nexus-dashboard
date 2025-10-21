@@ -23,11 +23,11 @@ RUN npm run build
 FROM nginx:1.25-alpine
 
 # Set the port
-EXPOSE 80
+EXPOSE 8080
 
 # Copy the build output (your 'dist' folder) from the 'builder' stage
 # This is the crucial part for a Vite project
 COPY --from=builder /app/dist /usr/share/nginx/html
 
 # Start Nginx when the container launches
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["npm","start"]
