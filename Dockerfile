@@ -1,33 +1,31 @@
 # === Stage 1: Build the React App ===
-# Use a Node.js image to build the app
 FROM node:18-alpine AS builder
 
-# Set the working directory in the container
 WORKDIR /app
-
-# Copy package.json and package-lock.json
 COPY package*.json ./
-
-# Install dependencies securely and efficiently
 RUN npm ci
-
-# Copy the rest of the project source code
 COPY . .
-
-# Run the build script (which creates the 'dist' folder)
 RUN npm run build
 
 
-# === Stage 2: Serve the App with Nginx ===
-# Use a lightweight Nginx image for the final container
-FROM nginx:1.25-alpine
+# === Stage 2: Serve the App with Node ===
+# Use a slim Node.js image for the final container
+FROM node:18-alpine
 
-# Set the port
+WORKDIR /app
+
+# Install 'serve', a simple static server
+RUN npm install -g serve
+
+# Copy *only* the built files from the 'builder' stage
+COPY --from=builder /app/dist .
+
+# EXPOSE the port Cloud Run will provide
+# (Cloud Run provides this as an environment variable, $PORT)
 EXPOSE 8080
 
-# Copy the build output (your 'dist' folder) from the 'builder' stage
-# This is the crucial part for a Vite project
-COPY --from=builder /app/dist /usr/share/nginx/html
-
-# Start Nginx when the container launches
-CMD ["npm","start"]
+# Start the server
+# -s handles Single-Page-App (React) routing
+# 'serve' will AUTOMATICALLY listen on the $PORT variable
+# provided by Google Cloud Run. This 100% solves your error.
+CMD ["serve", "-s", "."]
