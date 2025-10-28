@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from 'react';
+import { withApi } from '@/lib/api';
 import { useOutletContext, useNavigate } from 'react-router-dom';
 import { Plant } from '@/components/DashboardLayout'; // Adjust path
 import { Button } from "@/components/ui/button";
@@ -63,9 +64,9 @@ export default function UserManagementPage() {
         const token = localStorage.getItem('token');
         if (!token) throw new Error("Authentication token not found.");
 
-        const apiUrl = `https://os.dsenergize.com/api/detaileRole?plantId=${selectedPlant.plantId}`;
+  const apiUrl = withApi(`/detaileRole?plantId=${selectedPlant.plantId}`);
 
-        const response = await fetch(apiUrl, {
+  const response = await fetch(apiUrl, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { withApi } from '@/lib/api';
 import PlantDetails from "./PlantDetails";
 
 const HomePage = () => {
@@ -30,9 +31,9 @@ const HomePage = () => {
           throw new Error("No authentication token found. Please log in.");
         }
 
-        const url = `https://os.dsenergize.com/api/plants?search=${encodeURIComponent(
+        const url = withApi(`/plants?search=${encodeURIComponent(
           searchTerm
-        )}&page=${currentPage}&limit=${rowsPerPage}`;
+        )}&page=${currentPage}&limit=${rowsPerPage}`);
 
         const response = await fetch(url, {
           headers: {
@@ -212,7 +213,7 @@ const HomePage = () => {
                   {loading ? (
                     <tr>
                       <td
-                        colSpan="4"
+                        colSpan={4}
                         className="text-center py-4 text-blue-600"
                       >
                         Loading...
@@ -220,7 +221,7 @@ const HomePage = () => {
                     </tr>
                   ) : error ? (
                     <tr>
-                      <td colSpan="4" className="text-center py-4 text-red-600">
+                      <td colSpan={4} className="text-center py-4 text-red-600">
                         Error: {error}
                       </td>
                     </tr>
@@ -253,7 +254,7 @@ const HomePage = () => {
                   ) : (
                     <tr>
                       <td
-                        colSpan="4"
+                        colSpan={4}
                         className="text-center py-4 text-gray-500"
                       >
                         No plants found.

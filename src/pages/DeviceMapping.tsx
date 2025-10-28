@@ -2,9 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { MdDeleteForever } from "react-icons/md";
-
-// Define the API base URL for easy changes
-const API_BASE_URL = "https://os.dsenergize.com/api";
+import { API_BASE_URL } from '@/lib/api';
 
 type DeviceType =
   | "inverter"

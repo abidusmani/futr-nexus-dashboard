@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { withApi } from '@/lib/api';
 import { FaUserAlt } from "react-icons/fa";
 import { BsToggle2Off, BsToggle2On } from "react-icons/bs";
 import { Link, useNavigate } from "react-router-dom";
@@ -49,7 +50,7 @@ const ClientRegister = () => {
     };
 
     try {
-      const response = await fetch("https://os.dsenergize.com/api/users/signup", {
+  const response = await fetch(withApi('/users/signup'), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

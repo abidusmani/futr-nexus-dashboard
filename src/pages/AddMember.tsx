@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { withApi } from '@/lib/api';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -43,7 +44,7 @@ export default function AddMemberPage() {
       if (!token) return;
 
       try {
-        const response = await fetch(`https://os.dsenergize.com/api/users/roles/getRolePlId?plantId=${selectedPlant.plantId}`, {
+  const response = await fetch(withApi(`/users/roles/getRolePlId?plantId=${selectedPlant.plantId}`), {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (response.ok) {

@@ -32,6 +32,7 @@ import {
   CommandItem,
 } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
+import { withApi } from '@/lib/api';
 import { Plant } from '@/components/DashboardLayout'; // Adjust path if needed
 
 interface TopNavigationProps {
@@ -62,7 +63,7 @@ export function TopNavigation({ activeMenu, selectedPlant, onSelectPlant }: TopN
 
         setIsLoadingPlants(true);
         try {
-          const response = await fetch(`https://os.dsenergize.com/api/plants`, {
+          const response = await fetch(withApi('/plants'), {
             headers: { 'Authorization': `Bearer ${token}` }
           });
           if (response.ok) {

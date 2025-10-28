@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { withApi } from '@/lib/api';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -52,7 +53,7 @@ export default function AddRolePage() {
         const token = localStorage.getItem('token');
         if (!token) throw new Error("Authentication token not found.");
 
-        const response = await fetch('https://os.dsenergize.com/api/users/roles/getAllpermission', {
+  const response = await fetch(withApi('/users/roles/getAllpermission'), {
           headers: { 'Authorization': `Bearer ${token}` },
         });
 

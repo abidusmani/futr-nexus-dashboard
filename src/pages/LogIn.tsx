@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { withApi } from '@/lib/api';
 import { useNavigate } from "react-router-dom";
 
 const LogIn = () => {
@@ -18,7 +19,7 @@ const LogIn = () => {
     setMessage(null);
 
     try {
-      const response = await fetch("https://os.dsenergize.com/api/users/login", {
+  const response = await fetch(withApi('/users/login'), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

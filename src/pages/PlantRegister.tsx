@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { withApi } from '@/lib/api';
 import { Toaster, toast } from "react-hot-toast";
 import { BsToggle2On, BsToggle2Off } from "react-icons/bs";
 import { useNavigate } from "react-router-dom";
@@ -52,7 +53,7 @@ const PlantRegister = () => {
       return;
     }
     try {
-      const response = await fetch(`https://os.dsenergize.com/api/search/userSearch?q=${encodeURIComponent(query)}`);
+      const response = await fetch(withApi(`/search/userSearch?q=${encodeURIComponent(query)}`));
       if (!response.ok) {
         throw new Error('User search failed');
       }
@@ -117,7 +118,7 @@ const PlantRegister = () => {
     }
 
     try {
-      const response = await fetch("https://os.dsenergize.com/api/plants/plantRegistration", {
+      const response = await fetch(withApi('/plants/plantRegistration'), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
