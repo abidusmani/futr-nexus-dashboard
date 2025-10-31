@@ -5,11 +5,9 @@ import { MdDeleteForever } from "react-icons/md";
 import { API_BASE_URL } from '@/lib/api';
 
 type DeviceType =
-  | "inverter"
-  | "weatherStation"
-  | "acdb"
-  | "dcdb"
-  | "meter";
+  | "Inverter"
+  | "WeatherSensor"
+  | "Meter";
 
 // Form state type
 export type DeviceMappingForm = {
@@ -43,15 +41,13 @@ const DeviceMapping: React.FC = () => {
   const [selectedPlant, setSelectedPlant] = useState<PlantOption | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [mappings, setMappings] = useState<DeviceMappingForm[]>([
-    { imei: "", sid: "", type: "inverter", name: "", acLoad: "", dcLoad: "" },
+    { imei: "", sid: "", type: "Inverter", name: "", acLoad: "", dcLoad: "" },
   ]);
 
   const deviceTypes: DeviceType[] = [
-    "inverter",
-    "weatherStation",
-    "acdb",
-    "dcdb",
-    "meter",
+    "Inverter",
+    "WeatherSensor",
+    "Meter",
   ];
 
   // Effect to fetch plants based on the search query
@@ -110,7 +106,7 @@ const DeviceMapping: React.FC = () => {
   const addMapping = () => {
     setMappings([
       ...mappings,
-      { imei: "", sid: "", type: "inverter", name: "", acLoad: "", dcLoad: "" },
+      { imei: "", sid: "", type: "Inverter", name: "", acLoad: "", dcLoad: "" },
     ]);
   };
 
@@ -169,7 +165,7 @@ const DeviceMapping: React.FC = () => {
       alert("Device mapping saved successfully!");
 
       // Reset form on success
-      setMappings([{ imei: "", sid: "", type: "inverter", name: "", acLoad: "", dcLoad: "" }]);
+      setMappings([{ imei: "", sid: "", type: "Inverter", name: "", acLoad: "", dcLoad: "" }]);
       setSelectedPlant(null);
       setPlantQuery("");
     } catch (error) {

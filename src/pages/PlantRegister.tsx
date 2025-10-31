@@ -142,7 +142,7 @@ const PlantRegister = () => {
       }
 
       toast.success("Plant registered successfully!");
-      navigate("/dashboard/plants");
+      navigate("/HomePage");
     } catch (err) {
       console.error("API Error:", err);
       toast.error(err.message || "Registration failed");
