@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { withApi } from '@/lib/api';
+import { withApi } from "@/lib/api";
 import { useOutletContext, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,6 +12,14 @@ import {
 } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { MoreHorizontal } from "lucide-react";
 
 // --- Type Definitions ---
 interface Plant {
@@ -48,7 +56,7 @@ export default function RolesManagementPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // ✅ 1. State for managing selected rows
+  // 1. State for managing selected rows
   const [selectedRoleIds, setSelectedRoleIds] = useState<string[]>([]);
 
   useEffect(() => {
@@ -67,9 +75,11 @@ export default function RolesManagementPage() {
         const token = localStorage.getItem("token");
         if (!token) throw new Error("Authentication token not found.");
 
-  const apiUrl = withApi(`/users/roles/getRolePlId?plantId=${selectedPlant.plantId}`);
+        const apiUrl = withApi(
+          `/users/roles/getRolePlId?plantId=${selectedPlant.plantId}`
+        );
 
-  const response = await fetch(apiUrl, {
+        const response = await fetch(apiUrl, {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
@@ -102,14 +112,26 @@ export default function RolesManagementPage() {
     );
   };
 
+  const handleUpdate = (roleId: string) => {
+    // Navigate to an edit page, passing the role ID in the URL
+    navigate(`/management/roles-management/update/${roleId}`);
+  };
+
+  const handleDelete = (roleId: string) => {
+    // Here you would typically show a confirmation modal first
+    console.log("Delete role:", roleId);
+    alert(`(Mock) Deleting role ${roleId}. Implement API call here.`);
+    // Example: after API call, you would filter the roles state:
+    // setRoles(prevRoles => prevRoles.filter(role => role._id !== roleId));
+  };
+
   if (!selectedPlant) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground p-10">
-        {/* Image added here */}
         <img
           src="https://d1gcht66xunowl.cloudfront.net/assets/visualai-app-admin/production/public/images/no-result.png"
           alt="No result found"
-          className="w-48 h-48 mb-4 object-contain" // Tailwind classes for sizing and presentation
+          className="w-48 h-48 mb-4 object-contain"
         />
         <h2 className="text-xl font-semibold mb-2">No plant selected.</h2>
         <p className="text-sm">
@@ -135,13 +157,13 @@ export default function RolesManagementPage() {
             <div className="text-center p-8 text-destructive">{error}</div>
           ) : (
             <>
-              {/* ✅ 2. Action Bar - Placed here to show only with the table */}
+              {/* 2. Action Bar */}
               <div className="flex items-center gap-2 mb-4">
                 <Button
                   variant="outline"
                   disabled={selectedRoleIds.length === 0}
                 >
-                  Delete
+                  Delete Selected
                 </Button>
                 <Button
                   onClick={() => navigate("/management/roles-management/add")}
@@ -201,9 +223,27 @@ export default function RolesManagementPage() {
                           </div>
                         </TableCell>
                         <TableCell className="text-right">
-                          <Button variant="ghost" size="icon">
-                            ...
-                          </Button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon">
+                                <span className="sr-only">Open menu</span>
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                              <DropdownMenuItem
+                                onClick={() => handleUpdate(role._id)}
+                              >
+                                Update
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handleDelete(role._id)}
+                              >
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </TableCell>
                       </TableRow>
                     ))
