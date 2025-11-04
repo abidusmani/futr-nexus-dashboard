@@ -107,7 +107,7 @@ export default function AddRolePage() {
       };
 
       // Ensure this is your correct endpoint for creating a role
-      const response = await fetch('https://os.dsenergize.com/api/users/createRole', {
+      const response = await fetch(withApi('/users/createRole'), {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

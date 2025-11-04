@@ -22,6 +22,17 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal } from "lucide-react";
+// ✨ --- IMPORTS FOR DELETE ALERT ---
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 // --- Type Definitions ---
 interface Plant {
@@ -61,6 +72,11 @@ export default function RolesManagementPage() {
   // 1. State for managing selected rows
   const [selectedRoleIds, setSelectedRoleIds] = useState<string[]>([]);
 
+  // ✨ 2. State for delete confirmation
+  const [isAlertOpen, setIsAlertOpen] = useState(false);
+  const [roleToDelete, setRoleToDelete] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null); // For delete errors
+
   useEffect(() => {
     // Reset selections when plant changes
     setSelectedRoleIds([]);
@@ -93,7 +109,7 @@ export default function RolesManagementPage() {
 
         const data: ApiResponse = await response.json();
         setRoles(data.roles || []);
-      } catch (err: any) {
+      } catch (err: any) { // ✨ FIX: Removed duplicate (err: any)
         console.error("Failed to fetch roles:", err);
         setError(err.message || "Could not load roles for this plant.");
       } finally {
@@ -119,12 +135,59 @@ export default function RolesManagementPage() {
     navigate(`/management/roles-management/update/${roleId}`);
   };
 
-  const handleDelete = (roleId: string) => {
-    // Here you would typically show a confirmation modal first
-    console.log("Delete role:", roleId);
-    alert(`(Mock) Deleting role ${roleId}. Implement API call here.`);
-    // Example: after API call, you would filter the roles state:
-    // setRoles(prevRoles => prevRoles.filter(role => role._id !== roleId));
+  // ✨ 3. This function now just opens the confirmation modal
+  const handleDeleteClick = (roleId: string) => {
+    setRoleToDelete(roleId);
+    setIsAlertOpen(true);
+  };
+
+  // ✨ 4. This is the logic copied from your UpdateRolePage
+  const handleConfirmDelete = async () => {
+    if (!roleToDelete) return; // Exit if no role is selected
+
+    setSubmitError(null);
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setSubmitError("Authentication token not found.");
+      setIsAlertOpen(false);
+      return;
+    }
+
+    try {
+      // This path must match your API file: /api/users/createRole
+      const response = await fetch(withApi(`/users/createRole`), {
+        method: "DELETE", // Use the DELETE method
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        // Your API expects the roleId in the body
+        body: JSON.stringify({
+          roleId: roleToDelete,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to delete role.");
+      }
+
+      // Success! Remove the role from the UI list
+      setRoles((prevRoles) =>
+        prevRoles.filter((role) => role._id !== roleToDelete)
+      );
+
+      alert("Role deleted successfully!");
+    } catch (err: any) { // ✨ FIX: Removed duplicate (err: any)
+      console.error("Failed to delete role:", err);
+      setSubmitError(err.message || "Could not delete role.");
+      // You can also set the main 'error' state
+      setError(err.message || "Could not delete role.");
+    } finally {
+      setIsAlertOpen(false); // Close the modal
+      setRoleToDelete(null); // Clear the selected role
+    }
   };
 
   if (!selectedPlant) {
@@ -144,131 +207,161 @@ export default function RolesManagementPage() {
   }
 
   return (
-    <div className="p-4 bg-gray-50 min-h-screen">
-      <div className="bg-white rounded-lg border">
-        <div className="p-4 border-b">
-          <h1 className="text-lg font-semibold text-gray-800">
-            Existing Roles for {selectedPlant.plantName}
-          </h1>
-        </div>
+    <>
+      {/* ✨ 5. The Delete Confirmation Modal */}
+      <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the role.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700"
+              onClick={handleConfirmDelete}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
-        <div className="p-4">
-          {isLoading ? (
-            <div className="text-center p-8">Loading roles...</div>
-          ) : error ? (
-            <div className="text-center p-8 text-destructive">{error}</div>
-          ) : (
-            <>
-              {/* 2. Action Bar */}
-              <div className="flex items-center gap-2 mb-4">
-                <Button
-                  variant="outline"
-                  disabled={selectedRoleIds.length === 0}
-                >
-                  Delete Selected
-                </Button>
-                <Button
-                  onClick={() => navigate("/management/roles-management/add")}
-                >
-                  Add role
-                </Button>
-                <Button>Update Global Roles</Button>
-              </div>
+      {/* --- Main Page Content --- */}
+      <div className="p-4 bg-gray-50 min-h-screen">
+        <div className="bg-white rounded-lg border">
+          <div className="p-4 border-b">
+            <h1 className="text-lg font-semibold text-gray-800">
+              Existing Roles for {selectedPlant.plantName}
+            </h1>
+          </div>
 
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-12">
-                      <Checkbox
-                        checked={
-                          selectedRoleIds.length === roles.length &&
-                          roles.length > 0
-                        }
-                        onCheckedChange={handleSelectAll}
-                      />
-                    </TableHead>
-                    <TableHead>ROLE NAME</TableHead>
-                    <TableHead>DESCRIPTION</TableHead>
-                    <TableHead>TOTAL ACCESSES</TableHead>
-                    <TableHead>ASSIGNED PERMISSIONS</TableHead>
-                    <TableHead className="text-right">ACTIONS</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {roles.length > 0 ? (
-                    roles.map((role) => (
-                      <TableRow key={role._id}>
-                        <TableCell>
-                          <Checkbox
-                            checked={selectedRoleIds.includes(role._id)}
-                            onCheckedChange={(checked: boolean) =>
-                              handleSelectRow(checked, role._id)
-                            }
-                          />
-                        </TableCell>
-                        <TableCell className="font-medium">
-                          {role.name}
-                        </TableCell>
-                        <TableCell className="text-muted-foreground">
-                          {role.description}
-                        </TableCell>
-                        <TableCell className="text-muted-foreground">
-                          {role.permissions.length}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex flex-wrap gap-1">
-                            {role.permissions.map((permission) => (
-                              <Badge key={permission._id} variant="secondary">
-                                {permission.name}
-                              </Badge>
-                            ))}
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <ClientOnly> {/* <-- 2. ADD THIS WRAPPER */}
-  
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon">
-          <span className="sr-only">Open menu</span>
-          <MoreHorizontal className="h-4 w-4" />
-        </Button>
-      </DropdownMenuTrigger>
-      
-      <DropdownMenuPortal>
-        <DropdownMenuContent align="end">
-          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-          <DropdownMenuItem
-            onClick={() => handleUpdate(role._id)}
-          >
-            Update
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            onClick={() => handleDelete(role._id)}
-          >
-            Delete
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenuPortal>
-    </DropdownMenu>
+          <div className="p-4">
+            {isLoading ? (
+              <div className="text-center p-8">Loading roles...</div>
+            ) : error ? (
+              <div className="text-center p-8 text-destructive">{error}</div>
+            ) : (
+              <>
+                {/* 2. Action Bar */}
+                <div className="flex items-center gap-2 mb-4">
+                  <Button
+                    variant="outline"
+                    disabled={selectedRoleIds.length === 0}
+                  >
+                    Delete Selected
+                  </Button>
+                  <Button
+                    onClick={() => navigate("/management/roles-management/add")}
+                  >
+                    Add role
+                  </Button>
+                  <Button>Update Global Roles</Button>
+                </div>
 
-  </ClientOnly>
+                {/* Show delete error */}
+                {submitError && (
+                  <p className="text-sm text-destructive mb-4">{submitError}</p>
+                )}
+
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-12">
+                        <Checkbox
+                          checked={
+                            selectedRoleIds.length === roles.length &&
+                            roles.length > 0
+                          }
+                          onCheckedChange={handleSelectAll}
+                        />
+                      </TableHead>
+                      <TableHead>ROLE NAME</TableHead>
+                      <TableHead>DESCRIPTION</TableHead>
+                      <TableHead>TOTAL ACCESSES</TableHead>
+                      <TableHead>ASSIGNED PERMISSIONS</TableHead>
+                      <TableHead className="text-right">ACTIONS</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {roles.length > 0 ? (
+                      roles.map((role) => (
+                        <TableRow key={role._id}>
+                          <TableCell>
+                            <Checkbox
+                              checked={selectedRoleIds.includes(role._id)}
+                              onCheckedChange={(checked: boolean) =>
+                                handleSelectRow(checked, role._id)
+                              }
+                            />
+                          </TableCell>
+                          <TableCell className="font-medium">
+                            {role.name}
+                          </TableCell>
+                          <TableCell className="text-muted-foreground">
+                            {role.description}
+                          </TableCell>
+                          <TableCell className="text-muted-foreground">
+                            {role.permissions.length}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex flex-wrap gap-1">
+                              {role.permissions.map((permission) => (
+                                <Badge key={permission._id} variant="secondary">
+                                  {permission.name}
+                                </Badge>
+                              ))}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <ClientOnly>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="icon">
+                                    <span className="sr-only">Open menu</span>
+                                    <MoreHorizontal className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+
+                                <DropdownMenuPortal>
+                                  <DropdownMenuContent align="end">
+                                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                    <DropdownMenuItem
+                                      onClick={() => handleUpdate(role._id)}
+                                    >
+                                      Update
+                                    </DropdownMenuItem>
+                                    {/* ✨ 6. This now calls the modal-opening function */}
+                                    <DropdownMenuItem
+                                      className="text-red-600"
+                                      onClick={() => handleDeleteClick(role._id)}
+                                    >
+                                      Delete
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenuPortal>
+                              </DropdownMenu>
+                            </ClientOnly>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={6} className="text-center h-24">
+                          No roles found for this plant.
                         </TableCell>
                       </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={6} className="text-center h-24">
-                        No roles found for this plant.
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </>
-          )}
+                    )}
+                  </TableBody>
+                </Table>
+              </>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
+
