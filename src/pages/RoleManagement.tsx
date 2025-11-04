@@ -325,7 +325,7 @@ export default function RolesManagementPage() {
                                   </Button>
                                 </DropdownMenuTrigger>
 
-                                <DropdownMenuPortal>
+                                
                                   <DropdownMenuContent align="end">
                                     <DropdownMenuLabel>Actions</DropdownMenuLabel>
                                     <DropdownMenuItem
@@ -341,7 +341,7 @@ export default function RolesManagementPage() {
                                       Delete
                                     </DropdownMenuItem>
                                   </DropdownMenuContent>
-                                </DropdownMenuPortal>
+                                
                               </DropdownMenu>
                             </ClientOnly>
                           </TableCell>
