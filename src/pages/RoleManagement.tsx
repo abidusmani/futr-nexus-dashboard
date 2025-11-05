@@ -2,6 +2,10 @@ import { useEffect, useState } from "react";
 import { withApi } from "@/lib/api";
 import { useOutletContext, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import toast from 'react-hot-toast';
 import {
   Table,
   TableBody,
@@ -77,6 +81,12 @@ export default function RolesManagementPage() {
   const [roleToDelete, setRoleToDelete] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null); // For delete errors
 
+  // --- New Permission modal state ---
+  const [isPermDialogOpen, setIsPermDialogOpen] = useState(false);
+  const [permName, setPermName] = useState('');
+  const [permDescription, setPermDescription] = useState('');
+  const [isCreatingPerm, setIsCreatingPerm] = useState(false);
+
   useEffect(() => {
     // Reset selections when plant changes
     setSelectedRoleIds([]);
@@ -139,6 +149,45 @@ export default function RolesManagementPage() {
   const handleDeleteClick = (roleId: string) => {
     setRoleToDelete(roleId);
     setIsAlertOpen(true);
+  };
+
+  const handleCreatePermission = async () => {
+    if (!permName.trim()) {
+      toast.error('Permission name is required');
+      return;
+    }
+
+    const token = localStorage.getItem('token');
+    if (!token) {
+      toast.error('Not authenticated');
+      return;
+    }
+
+    setIsCreatingPerm(true);
+    try {
+      const response = await fetch(withApi('/users/createPermission'), {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name: permName, description: permDescription }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || 'Failed to create permission');
+
+      toast.success('Permission created');
+      setIsPermDialogOpen(false);
+      setPermName('');
+      setPermDescription('');
+      // Optionally refresh roles/permissions list elsewhere
+    } catch (err: any) {
+      console.error('Create permission failed', err);
+      toast.error(err.message || 'Failed to create permission');
+    } finally {
+      setIsCreatingPerm(false);
+    }
   };
 
   // ✨ 4. This is the logic copied from your UpdateRolePage
@@ -246,19 +295,25 @@ export default function RolesManagementPage() {
             ) : (
               <>
                 {/* 2. Action Bar */}
-                <div className="flex items-center gap-2 mb-4">
-                  <Button
-                    variant="outline"
-                    disabled={selectedRoleIds.length === 0}
-                  >
-                    Delete Selected
-                  </Button>
-                  <Button
-                    onClick={() => navigate("/management/roles-management/add")}
-                  >
-                    Add role
-                  </Button>
-                  <Button>Update Global Roles</Button>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      disabled={selectedRoleIds.length === 0}
+                    >
+                      Delete Selected
+                    </Button>
+                    <Button onClick={() => navigate("/management/roles-management/add")}>
+                      Add role
+                    </Button>
+                    <Button>Update Global Roles</Button>
+                  </div>
+
+                  <div className="ml-4">
+                    <Button variant="outline" onClick={() => setIsPermDialogOpen(true)}>
+                      New permission
+                    </Button>
+                  </div>
                 </div>
 
                 {/* Show delete error */}
@@ -356,6 +411,33 @@ export default function RolesManagementPage() {
                     )}
                   </TableBody>
                 </Table>
+                {/* New Permission Dialog */}
+                <Dialog open={isPermDialogOpen} onOpenChange={setIsPermDialogOpen}>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Create Permission</DialogTitle>
+                      <DialogDescription>
+                        Create a new permission that can be assigned to roles.
+                      </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="mt-4 space-y-4">
+                      <div>
+                        <label className="text-sm font-medium text-gray-700">Permission Name</label>
+                        <Input placeholder="e.g., ViewDashboard" value={permName} onChange={(e) => setPermName(e.target.value)} />
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-700">Description</label>
+                        <Textarea placeholder="Allows users to view the main dashboard..." value={permDescription} onChange={(e) => setPermDescription(e.target.value)} />
+                      </div>
+                    </div>
+
+                    <DialogFooter>
+                      <Button variant="outline" onClick={() => setIsPermDialogOpen(false)}>Cancel</Button>
+                      <Button onClick={handleCreatePermission} disabled={isCreatingPerm}>{isCreatingPerm ? 'Creating...' : 'Create'}</Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
               </>
             )}
           </div>

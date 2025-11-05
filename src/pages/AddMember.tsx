@@ -79,7 +79,7 @@ export default function AddMemberPage() {
         plantId: selectedPlant.plantId,
       };
 
-      const response = await fetch('https://os.dsenergize.com/api/addMember', {
+      const response = await fetch(withApi('/addMember'), {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
