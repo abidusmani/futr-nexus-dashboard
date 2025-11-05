@@ -23,7 +23,8 @@ export type DeviceMappingForm = {
 export type DeviceMappingPayload = {
   imei: string;
   sid: number;
-  type: DeviceType;
+  // Use string here because backend expects formatted type names (e.g. 'Inverter', 'Meter', 'WeatherSensor')
+  type: string;
   name: string;
   acLoad: number; 
   dcLoad: number; 
@@ -93,6 +94,21 @@ const DeviceMapping: React.FC = () => {
     return () => clearTimeout(timeout);
   }, [plantQuery, selectedPlant]);
 
+  // Map frontend device type identifiers to backend-expected names
+    const mapDeviceTypeToBackend = (type: DeviceType) => {
+      switch (type) {
+        case "Inverter":
+          return "Inverter";
+        case "Meter":
+          return "Meter";
+        case "WeatherSensor":
+          return "WeatherSensor";
+        // For any other DeviceType (shouldn't occur), return the raw value
+        default:
+          return type;
+      }
+    };
+
   const handleMappingChange = (
     index: number,
     field: keyof DeviceMappingForm,
@@ -126,7 +142,8 @@ const DeviceMapping: React.FC = () => {
     const cleanedMappings: DeviceMappingPayload[] = mappings.map((m) => ({
       imei: m.imei.trim(),
       sid: parseInt(m.sid, 10),
-      type: m.type,
+      // convert frontend type into backend expected name
+      type: mapDeviceTypeToBackend(m.type),
       name: m.name.trim(),
       acLoad: m.acLoad ? parseFloat(m.acLoad) : 0,
       dcLoad: m.dcLoad ? parseFloat(m.dcLoad) : 0,
