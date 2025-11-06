@@ -14,7 +14,7 @@ const HomePage = () => {
   const [error, setError] = useState(null);
   const [selectedPlant, setSelectedPlant] = useState(null);
 
-  const rowsPerPage = 5;
+  const rowsPerPage = 6;
 
   // A flag to force a re-fetch
   const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -52,8 +52,20 @@ const HomePage = () => {
 
         const result = await response.json();
         if (result.success) {
-          setPlants(result.data);
-          setTotalPages(Math.ceil(result.totalCount / rowsPerPage));
+          const dataArray = result.data || [];
+
+          // If backend provides totalCount use server-side pagination values
+          if (typeof result.totalCount === 'number') {
+            setPlants(dataArray);
+            setTotalPages(Math.max(1, Math.ceil(result.totalCount / rowsPerPage)));
+          } else {
+            // Fallback: backend didn't return totalCount (or ignored page/limit) —
+            // assume it returned the full list and perform client-side pagination
+            const total = Array.isArray(dataArray) ? dataArray.length : 0;
+            setTotalPages(Math.max(1, Math.ceil(total / rowsPerPage)));
+            const start = (currentPage - 1) * rowsPerPage;
+            setPlants(Array.isArray(dataArray) ? dataArray.slice(start, start + rowsPerPage) : []);
+          }
         } else {
           throw new Error(result.message || "Failed to fetch data");
         }
