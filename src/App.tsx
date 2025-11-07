@@ -18,6 +18,8 @@ import AddMemberPage from "./pages/AddMember";
 import DeviceMapping from "./pages/DeviceMapping";
 import ProtectedRoute from "./components/ProtechtedRoute";
 import UpdatePage from "./pages/UpdatePage";
+import RMSModelPage from "./pages/RMSModel";
+import AddModelDevice from "./pages/AddModel";  
 
 const App = () => (
   <BrowserRouter>
@@ -44,6 +46,7 @@ const App = () => (
           path="/management/roles-management"
           element={<RolesManagement />}
         />
+        <Route path="/RMS-settings/add-model" element={<AddModelDevice />} />
         <Route
           path="/management/user-management"
           element={<UserManagement />}
@@ -56,6 +59,10 @@ const App = () => (
         <Route
           path="/management/roles-management/update/:id"
           element={<UpdatePage />}
+        />
+        <Route
+          path="/RMS-settings/global"
+          element={<RMSModelPage />}
         />
       </Route>
       {/* Any other routes that do not need the dashboard layout go here */}

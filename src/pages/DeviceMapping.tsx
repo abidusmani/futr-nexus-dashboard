@@ -9,7 +9,15 @@ type DeviceType =
   | "WeatherSensor"
   | "Meter";
 
-// Form state type
+// Type for model options fetched from the /deviceLebel API
+export type ModelOption = {
+  _id: string;
+  modelName: string;
+  modelMake: string;
+  modelType: string;
+};
+
+// Updated Form state type for each row
 export type DeviceMappingForm = {
   imei: string;
   sid: string;
@@ -17,17 +25,19 @@ export type DeviceMappingForm = {
   name: string;
   acLoad: string;
   dcLoad: string;
+  modelId: string; // <-- NEW: To store the selected model's ID
+  modelOptions: ModelOption[]; // <-- NEW: To store the dropdown options for this row
 };
 
-// API payload type for a single device
+// API payload type for a single device mapping
 export type DeviceMappingPayload = {
   imei: string;
   sid: number;
-  // Use string here because backend expects formatted type names (e.g. 'Inverter', 'Meter', 'WeatherSensor')
   type: string;
   name: string;
-  acLoad: number; 
-  dcLoad: number; 
+  modelId: string; // <-- NEW
+  acLoad?: number; // <-- Optional
+  dcLoad?: number; // <-- Optional
 };
 
 // Type for plant options fetched from the search API
@@ -36,14 +46,29 @@ export type PlantOption = {
   plantName: string;
 };
 
+// Helper function to fetch models
+const fetchModels = async (modelType: DeviceType, token: string | null) => {
+  if (!token) throw new Error("No token provided");
+  
+  const response = await fetch(
+    `${API_BASE_URL}/deviceMapping/deviceLebel?modelType=${modelType}`,
+    {
+      headers: { "Authorization": `Bearer ${token}` }
+    }
+  );
+  if (!response.ok) throw new Error(`Failed to fetch models for ${modelType}`);
+  const models: ModelOption[] = await response.json();
+  return models;
+};
+
+
 const DeviceMapping: React.FC = () => {
   const [plantQuery, setPlantQuery] = useState("");
   const [plantOptions, setPlantOptions] = useState<PlantOption[]>([]);
   const [selectedPlant, setSelectedPlant] = useState<PlantOption | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [mappings, setMappings] = useState<DeviceMappingForm[]>([
-    { imei: "", sid: "", type: "Inverter", name: "", acLoad: "", dcLoad: "" },
-  ]);
+  // Initialize with an empty array; the useEffect will populate it.
+  const [mappings, setMappings] = useState<DeviceMappingForm[]>([]);
 
   const deviceTypes: DeviceType[] = [
     "Inverter",
@@ -61,7 +86,7 @@ const DeviceMapping: React.FC = () => {
     const timeout = setTimeout(async () => {
       if (plantQuery.trim()) {
         try {
-          const token = localStorage.getItem("token"); 
+          const token = localStorage.getItem("token");
           if (!token) {
             alert("You are not logged in. Please log in and try again.");
             return;
@@ -94,6 +119,54 @@ const DeviceMapping: React.FC = () => {
     return () => clearTimeout(timeout);
   }, [plantQuery, selectedPlant]);
 
+
+  // Fetches model options for a specific mapping row based on its type
+  const fetchModelOptions = async (index: number, modelType: DeviceType) => {
+    try {
+      const token = localStorage.getItem("token");
+      const models = await fetchModels(modelType, token);
+      
+      const updated = [...mappings];
+      updated[index].modelOptions = models;
+      updated[index].modelId = ""; // Reset model selection
+      setMappings(updated);
+
+    } catch (error) {
+      console.error("Error fetching device models:", error);
+      // Set empty options for that row on failure
+      const updated = [...mappings];
+      updated[index].modelOptions = [];
+      updated[index].modelId = "";
+      setMappings(updated);
+    }
+  };
+
+  // Function to reset the form to its initial state (one row with models)
+  const resetFormToInitial = async () => {
+    setIsLoading(true);
+    try {
+      const token = localStorage.getItem("token");
+      // Fetch models for the default "Inverter" type
+      const initialModels = await fetchModels("Inverter", token);
+      setMappings([{
+        imei: "", sid: "", type: "Inverter", name: "", acLoad: "", dcLoad: "", modelId: "", modelOptions: initialModels
+      }]);
+    } catch (error) {
+      console.error("Failed to reset form with initial models:", error);
+      // Fallback to empty
+      setMappings([{
+        imei: "", sid: "", type: "Inverter", name: "", acLoad: "", dcLoad: "", modelId: "", modelOptions: []
+      }]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // On component mount, load the initial form state
+  useEffect(() => {
+    resetFormToInitial();
+  }, []); // Runs once on mount
+
   // Map frontend device type identifiers to backend-expected names
     const mapDeviceTypeToBackend = (type: DeviceType) => {
       switch (type) {
@@ -103,7 +176,6 @@ const DeviceMapping: React.FC = () => {
           return "Meter";
         case "WeatherSensor":
           return "WeatherSensor";
-        // For any other DeviceType (shouldn't occur), return the raw value
         default:
           return type;
       }
@@ -115,15 +187,28 @@ const DeviceMapping: React.FC = () => {
     value: string,
   ) => {
     const updated = [...mappings];
-    updated[index] = { ...updated[index], [field]: value };
+    // We use 'as any' here because TypeScript can't infer the dynamic key
+    (updated[index] as any)[field] = value;
+
+    // If the device type changed, fetch new models for that row
+    if (field === "type") {
+      fetchModelOptions(index, value as DeviceType);
+    }
+    
     setMappings(updated);
   };
 
   const addMapping = () => {
-    setMappings([
-      ...mappings,
-      { imei: "", sid: "", type: "Inverter", name: "", acLoad: "", dcLoad: "" },
-    ]);
+    const newIndex = mappings.length;
+    const newMapping: DeviceMappingForm = {
+      imei: "", sid: "", type: "Inverter", name: "", acLoad: "", dcLoad: "", modelId: "", modelOptions: []
+    };
+    
+    // Add to state first
+    setMappings([...mappings, newMapping]);
+    
+    // Then fetch default models for the new row
+    fetchModelOptions(newIndex, newMapping.type);
   };
 
   const removeMapping = (index: number) => {
@@ -137,21 +222,44 @@ const DeviceMapping: React.FC = () => {
       alert("Please search and select a plant.");
       return;
     }
-    // ... your other validation logic ...
 
-    const cleanedMappings: DeviceMappingPayload[] = mappings.map((m) => ({
-      imei: m.imei.trim(),
-      sid: parseInt(m.sid, 10),
-      // convert frontend type into backend expected name
-      type: mapDeviceTypeToBackend(m.type),
-      name: m.name.trim(),
-      acLoad: m.acLoad ? parseFloat(m.acLoad) : 0,
-      dcLoad: m.dcLoad ? parseFloat(m.dcLoad) : 0,
-    }));
+    // --- NEW VALIDATION ---
+    for (const m of mappings) {
+      if (!m.imei || !m.sid || !m.type || !m.modelId) {
+        alert("Please fill in all required fields (*) for all devices, including selecting a device model.");
+        return;
+      }
+      if (isNaN(parseInt(m.sid, 10))) {
+         alert(`Invalid Slave ID: ${m.sid}. Please enter a number.`);
+         return;
+      }
+    }
+    // --- END VALIDATION ---
 
-    // ✅ THE FIX: Change 'plantId' to 'plantName' to match the backend's requirement
+    const cleanedMappings: DeviceMappingPayload[] = mappings.map((m) => {
+      // Start with the base payload
+      const payload: DeviceMappingPayload = {
+        imei: m.imei.trim(),
+        sid: parseInt(m.sid, 10),
+        type: mapDeviceTypeToBackend(m.type),
+        name: m.name.trim() || "", // Send empty string if no name
+        modelId: m.modelId, // <-- ADDED
+      };
+
+      // Conditionally add AC/DC load only if they have a value
+      if (m.acLoad) {
+        payload.acLoad = parseFloat(m.acLoad);
+      }
+      if (m.dcLoad) {
+        payload.dcLoad = parseFloat(m.dcLoad);
+      }
+      
+      return payload;
+    });
+
+    // ✅ THE FIX: Change to 'plantId'
     const finalPayload = {
-      plantName: selectedPlant.plantName,
+      plantId: selectedPlant.plantId,
       mappings: cleanedMappings,
     };
 
@@ -182,7 +290,7 @@ const DeviceMapping: React.FC = () => {
       alert("Device mapping saved successfully!");
 
       // Reset form on success
-      setMappings([{ imei: "", sid: "", type: "Inverter", name: "", acLoad: "", dcLoad: "" }]);
+      resetFormToInitial();
       setSelectedPlant(null);
       setPlantQuery("");
     } catch (error) {
@@ -260,7 +368,9 @@ const DeviceMapping: React.FC = () => {
             <span className="absolute -top-2 left-3 text-xs bg-green-600 text-white px-2 py-0.5 rounded-full shadow">
               {mapping.type.charAt(0).toUpperCase() + mapping.type.slice(1)}
             </span>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+            
+            {/* --- UPDATED GRID (4 COLS) --- */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
               {/* IMEI */}
               <div>
                 <label className="text-sm font-medium text-gray-600">IMEI *</label>
@@ -298,12 +408,45 @@ const DeviceMapping: React.FC = () => {
                 <select
                   value={mapping.type}
                   onChange={(e) => handleMappingChange(index, "type", e.target.value as DeviceType)}
+                  onFocus={() => {
+                    // If options are empty when user focuses the type select, proactively load models for this type
+                    if (mapping.modelOptions.length === 0) {
+                      // fire-and-forget
+                      fetchModelOptions(index, mapping.type).catch((err) => console.error(err));
+                    }
+                  }}
                   className="w-full border rounded-md px-2 py-1 mt-1 bg-white"
                   disabled={isLoading}
                 >
                   {deviceTypes.map((type) => (
                     <option key={type} value={type}>
                       {type.charAt(0).toUpperCase() + type.slice(1)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* --- NEW: Device Model --- */}
+              <div>
+                <label className="text-sm font-medium text-gray-600">Device Model *</label>
+                <select
+                  value={mapping.modelId}
+                  onChange={(e) => handleMappingChange(index, "modelId", e.target.value)}
+                  onFocus={() => {
+                    // If model options are empty when the user focuses the model select, fetch them for the current type
+                    if (mapping.modelOptions.length === 0) {
+                      fetchModelOptions(index, mapping.type).catch((err) => console.error(err));
+                    }
+                  }}
+                  className="w-full border rounded-md px-2 py-1 mt-1 bg-white"
+                  disabled={isLoading || mapping.modelOptions.length === 0}
+                >
+                  <option value="">
+                    {mapping.modelOptions.length === 0 ? (isLoading ? "Loading..." : "Select type") : "Select a model"}
+                  </option>
+                  {mapping.modelOptions.map((model) => (
+                    <option key={model._id} value={model._id}>
+                      {model.modelName} 
                     </option>
                   ))}
                 </select>
@@ -378,7 +521,7 @@ const DeviceMapping: React.FC = () => {
         <button
           onClick={handleSubmit}
           className="bg-green-600 hover:bg-green-700 text-white font-bold px-8 py-3 rounded-lg text-lg transition-all disabled:bg-gray-400 disabled:cursor-not-allowed"
-          disabled={isLoading || !selectedPlant}
+          disabled={isLoading || !selectedPlant || mappings.length === 0}
         >
           {isLoading ? "Submitting..." : "Submit Mapping"}
         </button>
