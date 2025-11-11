@@ -53,7 +53,13 @@ interface NestedSidebarProps {
   onNestedToggle: () => void;
 }
 
-const submenuItems = {
+type SubmenuItem = {
+  title: string;
+  icon: any;
+  url?: string;
+};
+
+const submenuItems: Record<string, SubmenuItem[]> = {
   "Digitization": [
     { title: "Geo Layouts", icon: Map },
     { title: "Merged Geo Layouts", icon: Layers },
