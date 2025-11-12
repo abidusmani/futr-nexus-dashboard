@@ -27,7 +27,7 @@ const App = () => (
       {/* The Index page becomes the default child route for the dashboard */}
       <Route path="/" element={<LogIn />} />{" "}
       {/*isse login file render ho rhi h*/}
-      <Route path="/Dashboard" element={<DashboardLayout />} />{" "}
+      
       {/*isse after sucessfull ye page dashboard ki render ho rhi h*/}
       <Route path="/" element={<ProtectedRoute>
               <DashboardLayout />
@@ -35,33 +35,33 @@ const App = () => (
         {" "}
         {/*yeha se dashboard layout ke andar chije hone wali h*/}
         {/* Your registration pages now render inside the DashboardLayout */}
-        <Route path="/Dashboard" element={<DashboardLayout />} />{" "}
-        <Route path="/DeviceMapping" element={<DeviceMapping />} />
-        <Route path="HomePage" element={<HomePage />} />
+  <Route path="Dashboard" element={<HomePage />} />
+  <Route path="HomePage" element={<HomePage />} />
+  <Route path="DeviceMapping" element={<DeviceMapping />} />
         <Route path="client-registration" element={<ClientRegister />} />
         <Route path="plant-registration" element={<PlantRegister />} />
         <Route path="digitization" element={<Digitization />} />
         <Route path="library" element={<Library />} />
         <Route
-          path="/management/roles-management"
+          path="management/roles-management"
           element={<RolesManagement />}
         />
-        <Route path="/RMS-settings/add-model" element={<AddModelDevice />} />
+        <Route path="RMS-settings/add-model" element={<AddModelDevice />} />
         <Route
-          path="/management/user-management"
+          path="management/user-management"
           element={<UserManagement />}
         />
-        <Route path="/management/roles-management/add" element={<AddRole />} />
+        <Route path="management/roles-management/add" element={<AddRole />} />
         <Route
-          path="/management/user-management/add"
+          path="management/user-management/add"
           element={<AddMemberPage />}
         />
         <Route
-          path="/management/roles-management/update/:id"
+          path="management/roles-management/update/:id"
           element={<UpdatePage />}
         />
         <Route
-          path="/RMS-settings/global"
+          path="RMS-settings/global"
           element={<RMSModelPage />}
         />
       </Route>

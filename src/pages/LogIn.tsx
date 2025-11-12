@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { withApi } from '@/lib/api';
 import { useNavigate } from "react-router-dom";
 
@@ -12,6 +12,19 @@ const LogIn = () => {
     null
   );
   const navigate = useNavigate();
+
+  // If user is already authenticated, redirect them away from the login page
+  useEffect(() => {
+    try {
+      const token = localStorage.getItem("token");
+      if (token) {
+        navigate("/Dashboard");
+      }
+    } catch (err) {
+      // ignore errors reading localStorage (very rare)
+      console.debug("Login redirect check failed:", err);
+    }
+  }, [navigate]);
 
  const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
