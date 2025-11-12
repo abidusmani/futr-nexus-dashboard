@@ -20,6 +20,7 @@ import ProtectedRoute from "./components/ProtechtedRoute";
 import UpdatePage from "./pages/UpdatePage";
 import RMSModelPage from "./pages/RMSModel";
 import AddModelDevice from "./pages/AddModel";  
+import NotFoundPage from "./pages/NotFoundPage";
 
 const App = () => (
   <BrowserRouter>
@@ -66,7 +67,7 @@ const App = () => (
         />
       </Route>
       {/* Any other routes that do not need the dashboard layout go here */}
-      <Route path="*" element={<NotFound />} />
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   </BrowserRouter>
 );
