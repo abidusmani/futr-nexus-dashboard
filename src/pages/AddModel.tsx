@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { 
   FaDownload, 
   FaUpload 
@@ -21,7 +21,6 @@ type ParameterRow = {
   dataType: string;
   multiplicationFactor: string;
   offset: string;
-  registerAddress: string; // Still in state, but we will omit from payload
   futrosKey: string;
 };
 
@@ -57,7 +56,6 @@ const createInitialParameter = (): ParameterRow => ({
   dataType: dataTypeOptions[0], // Default to "32int"
   multiplicationFactor: "1",
   offset: "0",
-  registerAddress: "",
   futrosKey: "",
 });
 
@@ -67,6 +65,7 @@ const AddModelDevice: React.FC = () => {
   const [deviceMake, setDeviceMake] = useState("");
   const [modelType, setModelType] = useState(modelTypeOptions[0]); // Default to first
   const [isLoading, setIsLoading] = useState(false); // <-- NEW
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   
   // State for the dynamic parameter rows
   const [parameters, setParameters] = useState<ParameterRow[]>([
@@ -85,6 +84,168 @@ const AddModelDevice: React.FC = () => {
     // We use 'as any' because TypeScript can't infer the dynamic key
     (updatedParameters[index] as any)[field] = value;
     setParameters(updatedParameters);
+  };
+
+  /**
+   * Basic CSV splitting that supports quoted fields.
+   * Returns array of rows, each row is array of cell strings.
+   */
+  const splitCSVLine = (line: string) => {
+    const result: string[] = [];
+    let cur = "";
+    let inQuotes = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (ch === '"') {
+        if (inQuotes && line[i + 1] === '"') { // escaped quote
+          cur += '"';
+          i++;
+        } else {
+          inQuotes = !inQuotes;
+        }
+      } else if (ch === ',' && !inQuotes) {
+        result.push(cur);
+        cur = "";
+      } else {
+        cur += ch;
+      }
+    }
+    result.push(cur);
+    return result.map(s => s.trim());
+  };
+
+  const parseCSV = (text: string) => {
+    // Remove BOM if present
+    const cleaned = text.replace(/\uFEFF/g, '');
+    const lines = cleaned.split(/\r?\n/).filter(l=>l.trim().length>0);
+    if (lines.length === 0) return { headers: [], rows: [] };
+    const headers = splitCSVLine(lines[0]).map(h => h.trim());
+    const rows = lines.slice(1).map(line => {
+      const cols = splitCSVLine(line);
+      const obj: Record<string,string> = {};
+      for (let i = 0; i < headers.length; i++) {
+        obj[headers[i]] = cols[i] ?? '';
+      }
+      return obj;
+    });
+    return { headers, rows };
+  };
+
+  const normalizeKey = (k: string) => k.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+  const findHeader = (headers: string[], candidates: string[]) => {
+    const map = headers.map(h => ({ raw: h, norm: normalizeKey(h) }));
+    for (const c of candidates) {
+      const normc = normalizeKey(c);
+      const found = map.find(m => m.norm === normc);
+      if (found) return found.raw;
+    }
+    // fallback: try partial contains
+    for (const c of candidates) {
+      const normc = normalizeKey(c);
+      const found = map.find(m => m.norm.includes(normc) || normc.includes(m.norm));
+      if (found) return found.raw;
+    }
+    return null;
+  };
+
+  const parseAndPopulateCSV = (text: string) => {
+    const { headers, rows } = parseCSV(text);
+    if (headers.length === 0) {
+      alert('CSV appears empty or malformed');
+      return;
+    }
+
+    // Determine model-level fields (if present)
+    const modelNameKey = findHeader(headers, ['modelname','model name','model']);
+    const deviceMakeKey = findHeader(headers, ['devicemake','device make','modelmake','make']);
+    const modelTypeKey = findHeader(headers, ['modeltype','model type','type']);
+
+    if (rows.length === 0) {
+      alert('CSV contains header but no rows');
+      return;
+    }
+
+    // Map parameter columns
+    const nameKey = findHeader(headers, ['name','parameter','sourcename','sourcename']);
+    const dataTypeKey = findHeader(headers, ['datatype','data type','type']);
+    const multKey = findHeader(headers, ['multiplicationfactor','multiplier','multiplicationfactor','multiplication_factor','mult']);
+    const offsetKey = findHeader(headers, ['offset']);
+    const futrKey = findHeader(headers, ['futroskey','futrOSKey','futros_key','futros key','key','futros']);
+    // Build parameter rows from each CSV row
+    const mapped: ParameterRow[] = rows.map(r => {
+      const name = (nameKey && (r[nameKey] ?? '')) || '';
+      const dataType = (dataTypeKey && (r[dataTypeKey] ?? dataTypeOptions[0])) || dataTypeOptions[0];
+      const multiplicationFactor = (multKey && (r[multKey] ?? '1')) || '1';
+      const offset = (offsetKey && (r[offsetKey] ?? '0')) || '0';
+      const futrosKeyVal = (futrKey && (r[futrKey] ?? '')) || '';
+      return {
+        id: crypto.randomUUID(),
+        name,
+        dataType,
+        multiplicationFactor: multiplicationFactor.toString(),
+        offset: offset.toString(),
+        futrosKey: futrosKeyVal,
+      } as ParameterRow;
+    });
+
+    // Set model-level fields from first CSV row if keys present
+    const first = rows[0];
+    if (modelNameKey && first[modelNameKey]) setModelName(first[modelNameKey]);
+    if (deviceMakeKey && first[deviceMakeKey]) setDeviceMake(first[deviceMakeKey]);
+    if (modelTypeKey && first[modelTypeKey]) {
+      const val = first[modelTypeKey];
+      if (modelTypeOptions.includes(val)) setModelType(val);
+    }
+
+    // Update parameters state
+    if (mapped.length > 0) setParameters(mapped);
+  };
+
+  const downloadSampleCSV = () => {
+    const headers = [
+      'modelName',
+      'deviceMake',
+      'modelType',
+      'name',
+      'dataType',
+      'multiplicationFactor',
+      'offset',
+      'futrosKey'
+    ];
+    const sampleRows = [
+      [
+        'ExampleModel',
+        'ExampleMake',
+        'Inverter',
+        'AC Power',
+        'Float',
+        '1',
+        '0',
+        'ac_power'
+      ],
+      [
+        'ExampleModel',
+        'ExampleMake',
+        'Inverter',
+        'DC Voltage',
+        'Float',
+        '0.1',
+        '0',
+        'dc_voltage'
+      ]
+    ];
+
+    const csv = [headers.join(',')].concat(sampleRows.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(','))).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'sample_add_model.csv';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
   };
 
   /**
@@ -204,12 +365,47 @@ const AddModelDevice: React.FC = () => {
             <FaDownload />
             Sample CSV
           </button>
-          <button 
+          {/* Hidden file input used to pick CSV files from local machine */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="text/csv,application/csv,text/plain"
+            className="hidden"
+            onChange={async (e) => {
+              const file = e.target.files?.[0];
+              if (!file) return;
+              try {
+                setIsLoading(true);
+                const text = await file.text();
+                parseAndPopulateCSV(text);
+              } catch (err) {
+                console.error('Failed to read CSV file', err);
+                alert('Failed to read CSV file.');
+              } finally {
+                setIsLoading(false);
+                // reset file input so same file can be selected again if needed
+                if (fileInputRef.current) fileInputRef.current.value = '';
+              }
+            }}
+          />
+
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
             className="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-md text-sm font-medium flex items-center gap-2 hover:bg-gray-100 disabled:opacity-50"
             disabled={isLoading}
           >
             <FaUpload />
             Upload CSV
+          </button>
+          <button
+            type="button"
+            onClick={() => downloadSampleCSV()}
+            className="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-md text-sm font-medium flex items-center gap-2 hover:bg-gray-100 disabled:opacity-50"
+            disabled={isLoading}
+          >
+            <FaDownload />
+            Download Sample CSV
           </button>
           <button 
             onClick={handleSubmit}
@@ -281,14 +477,10 @@ const AddModelDevice: React.FC = () => {
             <thead>
               <tr className="bg-gray-50">
                 <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[5%]">S.No.</th>
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[15%]">Name</th>
+                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[20%]">Name</th>
                 <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[10%]">Data Type</th>
                 <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[15%]">Multiplication Factor</th>
                 <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[10%]">Offset</th>
-                {/* As per your schema, Register Address is not sent.
-                   If you need it, add it back to the BackendParameter type and handleSubmit
-                <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[20%]">Register Address</th>
-                */}
                 <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[15%]">FutrOS Key</th>
                 <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[10%]">Action</th>
               </tr>
@@ -343,18 +535,7 @@ const AddModelDevice: React.FC = () => {
                       disabled={isLoading}
                     />
                   </td>
-                  {/*
-                  <td className="px-3 py-2">
-                    <input
-                      type="text"
-                      placeholder="Register Address"
-                      value={row.registerAddress}
-                      onChange={(e) => handleParameterChange(index, "registerAddress", e.target.value)}
-                      className="w-full border border-gray-300 rounded-md px-2 py-1 disabled:bg-gray-50"
-                      disabled={isLoading}
-                    />
-                  </td>
-                  */}
+                  {/* Register Address removed per request */}
                   <td className="px-3 py-2">
                     <input
                       type="text"

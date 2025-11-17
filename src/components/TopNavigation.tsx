@@ -97,7 +97,7 @@ export function TopNavigation({ activeMenu, selectedPlant, onSelectPlant }: TopN
                   variant="outline"
                   role="combobox"
                   aria-expanded={isDropdownOpen}
-                  className="w-[200px] justify-between"
+                  className="w-[300px] justify-between"
                 >
                   {selectedPlant
                     ? allPlants.find((plant) => plant.plantId === selectedPlant.plantId)?.plantName
@@ -105,7 +105,7 @@ export function TopNavigation({ activeMenu, selectedPlant, onSelectPlant }: TopN
                   <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-[200px] p-0">
+              <PopoverContent className="w-[300px] p-0">
                 <Command>
                   <CommandInput placeholder="Search plant..." />
                   <CommandEmpty>
