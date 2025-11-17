@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { withApi } from '@/lib/api';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -44,14 +44,46 @@ export default function RMSModelPage() {
     });
   }, [query, equipment, externalRows]);
 
+  // Pagination state
+  const [page, setPage] = useState<number>(1);
+  const pageSize = 10;
+
+  // Reset page when filters or source change
+  useEffect(() => {
+    setPage(1);
+  }, [equipment, query, externalRows]);
+
+  const totalRows = rows.length;
+  const totalPages = Math.max(1, Math.ceil(totalRows / pageSize));
+  // Ensure current page is within range
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
+
+  const paginatedRows = rows.slice((page - 1) * pageSize, page * pageSize);
+
   // Map a generic API item to the table row shape we use
+  const normalizeTypeValue = (v?: string) => {
+    if (!v) return '';
+    const s = String(v).toLowerCase().replace(/[^a-z0-9]/g, '');
+    if (s.includes('inverter')) return 'Inverter';
+    if (s.includes('meter')) return 'Meter';
+    if (s.includes('weathersensor') || s.includes('weather') || s.includes('sensor')) return 'WeatherSensor';
+    // fallback: capitalize first letter
+    return v.charAt(0).toUpperCase() + v.slice(1);
+  };
+
   function mapApiItemToRow(item: any) {
+    const rawName = item.name ?? item.standardName ?? item.attributeName ?? item.label ?? item.title ?? item.displayName ?? item.paramName ?? item.attribute ?? '';
+    const rawType = item.type ?? item.deviceType ?? item.device_type ?? item.equipmentType ?? item.equipment ?? item.device ?? '';
+    const type = normalizeTypeValue(rawType) || 'Inverter';
+
     return {
-      name: item.name ?? item.label ?? item.title ?? '',
-      type: item.type ?? item.equipmentType ?? item.equipment ?? 'Inverter',
+      name: rawName,
+      type,
       unit: item.unit ?? item.uom ?? '--',
       color: item.color ?? item.colour ?? '',
-      key: item.key ?? item.id ?? item._id ?? '',
+      key: item.key ?? item.id ?? item._id ?? item.code ?? item.futrOSKey ?? '',
       chart: item.chartType ?? item.chart ?? '',
       files: item.datafileCount ?? item.files ?? item.count ?? 0,
     };
@@ -69,6 +101,7 @@ export default function RMSModelPage() {
       });
       if (!res.ok) throw new Error(`API request failed: ${res.status}`);
       const data = await res.json();
+      console.debug('loadFromApi raw response:', data);
       // Expecting an array somewhere in the response
       let items: any[] = [];
       if (Array.isArray(data)) items = data;
@@ -77,7 +110,9 @@ export default function RMSModelPage() {
       else if (Array.isArray(data.roles)) items = data.roles; // fallback
       else throw new Error('API returned unexpected shape — expected an array in the response');
 
-      setExternalRows(items.map(mapApiItemToRow));
+      const mapped = items.map(mapApiItemToRow);
+      console.debug('loadFromApi mapped rows:', mapped.slice(0,10));
+      setExternalRows(mapped);
     } catch (e: any) {
       console.error('Failed to load API data', e);
       setApiError(e.message || String(e));
@@ -86,6 +121,45 @@ export default function RMSModelPage() {
       setIsLoadingApi(false);
     }
   }
+
+  async function fetchStandardAttributes() {
+    setIsLoadingApi(true);
+    setApiError(null);
+    try {
+      const token = localStorage.getItem('token');
+      const url = withApi(`/standardAttributes/registerStandard?deviceType=${encodeURIComponent(equipment)}`);
+      const res = await fetch(url, {
+        method: 'GET',
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      });
+      if (!res.ok) throw new Error(`API request failed: ${res.status}`);
+      const data = await res.json();
+      console.debug('fetchStandardAttributes raw response:', data);
+      let items: any[] = [];
+      if (Array.isArray(data)) items = data;
+      else if (Array.isArray(data.data)) items = data.data;
+      else if (Array.isArray(data.items)) items = data.items;
+      else if (Array.isArray(data.attributes)) items = data.attributes;
+      else throw new Error('API returned unexpected shape — expected an array in the response');
+
+      const mapped = items.map(mapApiItemToRow);
+      console.debug('fetchStandardAttributes mapped rows:', mapped.slice(0,10));
+      setExternalRows(mapped);
+    } catch (e: any) {
+      console.error('Failed to load standard attributes', e);
+      setApiError(e.message || String(e));
+      setExternalRows(null);
+    } finally {
+      setIsLoadingApi(false);
+    }
+  }
+
+  // Auto-load standard attributes whenever selected equipment changes
+  useEffect(() => {
+    // fetch attributes for the selected equipment on mount and whenever it changes
+    fetchStandardAttributes();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [equipment]);
 
   return (
     <div className="p-6">
@@ -108,8 +182,7 @@ export default function RMSModelPage() {
       </div>
 
       <div className="flex items-center gap-3 mb-4">
-        <Input placeholder="API URL (absolute or /path)" value={apiUrl} onChange={(e) => setApiUrl(e.target.value)} />
-        <Button onClick={loadFromApi} disabled={isLoadingApi}>{isLoadingApi ? 'Loading...' : 'Load from API'}</Button>
+            {/* Standard attributes are loaded automatically when device type changes. */}
         {apiError && <div className="text-destructive ml-2">{apiError}</div>}
       </div>
 
@@ -127,7 +200,7 @@ export default function RMSModelPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {rows.map((r) => (
+            {paginatedRows.map((r) => (
               <TableRow key={r.key} className="hover:bg-gray-50">
                 <TableCell className="py-6">{r.name}</TableCell>
                 <TableCell>{r.type}</TableCell>
@@ -147,6 +220,31 @@ export default function RMSModelPage() {
           </TableBody>
         </Table>
       </div>
+      {/* Pagination controls shown when totalRows exceeds pageSize */}
+      {totalRows > pageSize && (
+        <div className="flex items-center justify-between mt-4">
+          <div className="text-sm text-muted-foreground">
+            Showing {(page - 1) * pageSize + 1} - {Math.min(page * pageSize, totalRows)} of {totalRows}
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="px-3 py-1 border rounded disabled:opacity-50"
+            >
+              Prev
+            </button>
+            <div className="px-3 py-1 border rounded">Page {page} / {totalPages}</div>
+            <button
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+              className="px-3 py-1 border rounded disabled:opacity-50"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
